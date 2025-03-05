@@ -1,8 +1,8 @@
 import { useRef, useEffect, useState } from "react";
-import Button from "./ui/Button";
 
 export default function WebcamFeed() {
   const videoRef = useRef(null);
+  const [emotion, setEmotion] = useState("Detecting...");
   const [isCameraOn, setIsCameraOn] = useState(false);
 
   useEffect(() => {
@@ -13,46 +13,63 @@ export default function WebcamFeed() {
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
+
+          // Start sending frames every second
+          const interval = setInterval(() => captureFrameAndSend(), 1000);
+          return () => clearInterval(interval);
         })
         .catch((error) => console.error("Error accessing webcam:", error));
     } else {
       if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject;
-        const tracks = stream.getTracks();
-        tracks.forEach(track => track.stop());
+        let tracks = videoRef.current.srcObject.getTracks();
+        tracks.forEach((track) => track.stop());
         videoRef.current.srcObject = null;
       }
     }
   }, [isCameraOn]);
 
+  const captureFrameAndSend = async () => {
+    if (!videoRef.current) return;
+
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+
+    context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    
+    canvas.toBlob(async (blob) => {
+      const formData = new FormData();
+      formData.append("file", blob, "frame.jpg");
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/predict", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await response.json();
+        if (data.emotion) {
+          setEmotion(data.emotion);
+        } else {
+          setEmotion("Error detecting emotion");
+        }
+      } catch (error) {
+        console.error("Error sending frame:", error);
+      }
+    }, "image/jpeg");
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center w-full">
-      <div className="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col items-center w-full max-w-lg">
-        <div className="flex flex-col items-center justify-center w-full">
-          {isCameraOn ? (
-            <video
-              ref={videoRef}
-              autoPlay
-              className="w-[500px] h-auto rounded-lg shadow-lg border-4 border-blue-500"
-            />
-          ) : (
-            <div className="w-[500px] h-[375px] bg-gray-700 rounded-lg flex items-center justify-center">
-              <p className="text-gray-400">Camera is off</p>
-            </div>
-          )}
-
-          {/* Wrapping button inside a flex container */}
-          <div className="mt-4 flex justify-center w-full">
-            <Button onClick={() => setIsCameraOn(!isCameraOn)}>
-              {isCameraOn ? "Turn Off Camera" : "Turn On Camera"}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <p className="text-gray-400 mt-6 text-center text-sm">
-        The emotion recognition model will analyze your expressions in real-time.
-      </p>
+    <div className="flex flex-col items-center space-y-4 p-4">
+      <video ref={videoRef} autoPlay className="w-96 h-auto rounded-lg shadow-md" />
+      <button
+        onClick={() => setIsCameraOn(!isCameraOn)}
+        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+      >
+        {isCameraOn ? "Turn Off Camera" : "Turn On Camera"}
+      </button>
+      <div className="text-xl font-bold mt-4">Emotion: {emotion}</div>
     </div>
   );
 }

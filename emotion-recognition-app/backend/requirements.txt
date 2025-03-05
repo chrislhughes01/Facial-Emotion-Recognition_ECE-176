@@ -11,3 +11,6 @@ torchvision
 tqdm
 flask
 flask-cors
+fastapi
+uvicorn
+python-multipart

@@ -1,14 +1,12 @@
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Home from "./pages/Home";
+import WebcamFeed from "./components/WebcamFeed";
 
-function App() {
+export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-      </Routes>
-    </Router>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
+      <h1 className="text-4xl font-bold mb-6 text-center">
+        Real-Time Emotion Recognition
+      </h1>
+      <WebcamFeed />
+    </div>
   );
 }
-
-export default App;

@@ -2,4 +2,3 @@ backend/dataset/** filter=lfs diff=lfs merge=lfs -text
 backend/dataset/*.npy filter=lfs diff=lfs merge=lfs -text
 backend/dataset/X_train.npy filter=lfs diff=lfs merge=lfs -text
 backend/dataset/* filter=lfs diff=lfs merge=lfs -text
-backend/dataset/dataset filter=lfs diff=lfs merge=lfs -text

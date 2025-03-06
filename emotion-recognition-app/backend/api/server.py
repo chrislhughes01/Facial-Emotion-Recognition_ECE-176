@@ -38,18 +38,11 @@ async def predict_emotion(file: UploadFile = File(...)):
         image = np.expand_dims(image, axis=-1)  # Add batch and channel dims
 
         # Make prediction
-        predictions = model.predict(image)[0]
+        predictions = model.predict(image)
         emotion_index = np.argmax(predictions)
         emotion_label = EMOTIONS[emotion_index]
 
-        # Prepare response with all probabilities
-        emotion_probs = {EMOTIONS[i]: float(predictions[i]) for i in range(len(EMOTIONS))}
-
-        return {
-            "emotion": emotion_label,
-            "confidence": float(predictions[emotion_index]),
-            "probabilities": emotion_probs
-        }
+        return {"emotion": emotion_label, "confidence": float(predictions[0][emotion_index])}
 
     except Exception as e:
         return {"error": str(e)}
